@@ -8,9 +8,9 @@
 #include <cutil_inline.h>
 
 #define MAXDEV 32
-#define NLOOP 2e11
+#define NLOOP 2e10
 #define PKG	  1024
-#define MAXSIZE 1024*1024*600
+#define MAXSIZE 1024*1024*300
 static const double MEGA  = 1e6;
 static const double MICRO = 1e-6;
 
@@ -44,31 +44,24 @@ sendperf(int argc, char **argv)
 
     printf("# %d device%s found.\n", ndev, ndev > 1 ? "s" : "");
     for (i = 0; i < ndev; i++) {
-        cudaSetDevice(i);
         cutilSafeCall(cudaMalloc((void**) &dst[i], sizeof(char) * maxsize));
-	src[i] = (char *)malloc(sizeof(char) * maxsize);
+        src[i] = (char *)malloc(sizeof(char) * maxsize);
     }
     printf("\n#\n# cudaMemcpy (HostToDevice)\n#\n");
 
-    for (sized = 1024; sized < maxsize; sized *= ratio) {
-
+    for (sized = PKG; sized < maxsize; sized *= ratio) {
         size = (size_t)sized;
-
-	get_cputime(&now, &dt);
-	for (j = 0; j < nloop/size; j++) {
-	    for (i = 0; i < ndev; i++) {
-  	        cudaMemcpy(dst[i], src[i], size, cudaMemcpyHostToDevice);
-	    }
-	}
+        get_cputime(&now, &dt);
+        for (j = 0; j < nloop/size; j++) {
+        	for (i = 0; i < ndev; i++) {
+        		cudaMemcpy(dst[i], src[i], size, cudaMemcpyHostToDevice);
+        	}
+        }
         cudaDeviceSynchronize();
-	get_cputime(&now, &dt);
-
-
-	  printf("%d byte    %f sec    %f MB/s\n", size, dt, nloop/MEGA/dt);
-
+        get_cputime(&now, &dt);
+        printf("%d byte    %f sec    %f MB/s\n", size, dt, nloop/MEGA/dt);
     }
-
-
+    cutilSafeCall(cudaFree(dst[0]));
 }
 
 static void
@@ -85,42 +78,38 @@ receiveperf(int argc, char **argv)
     char *dst[MAXDEV];
     int ndev;
 
-
     ndev = 1; // !!!
 
     printf("# %d device%s found.\n", ndev, ndev > 1 ? "s" : "");
     for (i = 0; i < ndev; i++) {
-
-        cutilSafeCall(cudaMalloc((void**) &src[i], sizeof(char) * maxsize));
-	dst[i] = (char *)malloc(sizeof(char) * maxsize);
+    	cutilSafeCall(cudaMalloc((void**) &src[i], sizeof(char) * maxsize));
+    	dst[i] = (char *)malloc(sizeof(char) * maxsize);
     }
     printf("\n#\n# cudaMemcpy (DeviceToHost)\n#\n");
 
-
-    for (sized = 1024; sized < maxsize; sized *= ratio) {
-
+    for (sized = PKG; sized < maxsize; sized *= ratio) {
     	size = (size_t)sized;
-
 		get_cputime(&now, &dt);
 		for (j = 0; j < nloop/size; j++) {
 			for (i = 0; i < ndev; i++) {
 				cudaSetDevice(i);
-					cudaMemcpy(dst[i], src[i], size, cudaMemcpyDeviceToHost);
+				cudaMemcpy(dst[i], src[i], size, cudaMemcpyDeviceToHost);
 		}
 	}
-
 	cudaDeviceSynchronize();
 	get_cputime(&now, &dt);
 	printf("%d byte    %f sec    %f MB/s\n",size, dt, nloop/MEGA/dt);
+
 	}
+    cutilSafeCall(cudaFree(src[0]));
 }
 
 int main(int argc, char **argv)
 {
-	printf("Starting Bandwidth Test...\n");
+	fprintf(stderr,"Starting Bandwidth Test...\n");
     sendperf(argc, argv);
     receiveperf(argc, argv);
 
-    fprintf(stderr, "going to quit...\n");
+    fprintf(stderr, "Finishing Bandwidth Test...\n");
     return 0;
 }

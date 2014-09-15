@@ -7,8 +7,8 @@
 #include <cutil.h>
 #include <cutil_inline.h>
 
-#define MAXDEV 32
-#define NLOOP 4e9
+#define MAXDEV 2
+#define NLOOP 4e8
 #define PKG	  1024
 #define MAXSIZE 1024*1024*300
 static const double MEGA  = 1e6;
@@ -105,6 +105,7 @@ receiveperf(int argc, char **argv)
 int main(int argc, char **argv)
 {
 	fprintf(stderr,"Starting Bandwidth Test...\n");
+	printf("Info:\nMax size:%d Byte\nPKGsize:%d Byte\nLOOP:%d\n\n",(int)MAXSIZE,(int)PKG,(int)NLOOP);
     sendperf(argc, argv);
     receiveperf(argc, argv);
 

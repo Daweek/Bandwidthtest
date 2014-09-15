@@ -8,7 +8,7 @@
 #include <cutil_inline.h>
 
 #define MAXDEV 32
-#define NLOOP 2e10
+#define NLOOP 4e9
 #define PKG	  1024
 #define MAXSIZE 1024*1024*300
 static const double MEGA  = 1e6;
@@ -92,14 +92,12 @@ receiveperf(int argc, char **argv)
 		get_cputime(&now, &dt);
 		for (j = 0; j < nloop/size; j++) {
 			for (i = 0; i < ndev; i++) {
-				cudaSetDevice(i);
 				cudaMemcpy(dst[i], src[i], size, cudaMemcpyDeviceToHost);
 		}
 	}
-	cudaDeviceSynchronize();
-	get_cputime(&now, &dt);
-	printf("%d byte    %f sec    %f MB/s\n",size, dt, nloop/MEGA/dt);
-
+		cudaDeviceSynchronize();
+		get_cputime(&now, &dt);
+		printf("%d byte    %f sec    %f MB/s\n",size, dt, nloop/MEGA/dt);
 	}
     cutilSafeCall(cudaFree(src[0]));
 }
